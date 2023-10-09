@@ -23,7 +23,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up JDK 17
+    - name: Set up JDK 17 #Github Actions에 보일 제목
       uses: actions/setup-java@v3
       with:
         java-version: '17'
@@ -44,8 +44,8 @@ jobs:
       # Build and push docker image (replace 'your-dockerhub-username' and 'your-image-name' with your own)
     - name : Build and Push Docker image
       run : |
-        docker build . --tag ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
-        docker push ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
+        docker build . --tag ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
 
       # SSH into the EC2 instance and start the docker container (replace IP address and path-to-key.pem accordingly)
     - name : Deploy to AWS EC2
@@ -54,8 +54,8 @@ jobs:
         host : ${{ secrets.SERVER_IP }}
         username : ${{ secrets.SSH_USER }}
         key : ${{ secrets.SSH_PRIVATE_KEY }}
-        script_stop : true
-        script_timeout : 60m
+#        script_stop : true
+#        script_timeout : 60m
         script : |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
-          docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
+          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
+          docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
