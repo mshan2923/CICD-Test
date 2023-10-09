@@ -36,22 +36,26 @@ jobs:
     - name: Run chmod to make gradlew executable
       run: chmod +x ./gradlew
 
+      # Log in to docker hub (replace 'username' and 'password' with your own)
+    - name: Login to DockerHub Registry
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-  deloy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Donwload artifact
-        uses: actions/download-artifact@2
-        with:
-          name: cicdsmple
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: SCP transfer
-        run: scp *.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:~/cicd
-      - name: Execute remote commands
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "sudo fuser -k 8080/tcp"
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "sudo nohup java -jar ~/cicd/*.jar &"
+
+      # Build and push docker image (replace 'your-dockerhub-username' and 'your-image-name' with your own)
+    - name : Build and Push Docker image
+      run : |
+        docker build . --tag ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
+
+      # SSH into the EC2 instance and start the docker container (replace IP address and path-to-key.pem accordingly)
+    - name : Deploy to AWS EC2
+      uses : appleboy/ssh-action@master
+      with :
+        host : ${{ secrets.SERVER_IP }}
+        username : ${{ secrets.SSH_USER }}
+        key : ${{ secrets.SSH_PRIVATE_KEY }}
+        script_stop : true
+        script_timeout : 60m
+        script : |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
+          docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/your-image-name:${{ github.sha }}
