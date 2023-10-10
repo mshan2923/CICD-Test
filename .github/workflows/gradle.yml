@@ -66,4 +66,4 @@ jobs:
 #        script_timeout : 60m
         script : |
           docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
-          docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
+#          docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
