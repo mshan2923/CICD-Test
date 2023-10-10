@@ -44,26 +44,52 @@ jobs:
     - name: Run chmod to make gradlew executable
       run: chmod +x ./gradlew
 
-      # Log in to docker hub (replace 'username' and 'password' with your own)
-    - name: Login to DockerHub Registry
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-
-
-      # Build and push docker image (replace 'your-dockerhub-username' and 'your-image-name' with your own)
-    - name : Build and Push Docker image
-      run : |
-        docker build . --tag ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
-        docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
-
-      # SSH into the EC2 instance and start the docker container (replace IP address and path-to-key.pem accordingly)
-    - name : Deploy to AWS EC2
-      uses : appleboy/ssh-action@master
-      with :
-        host : ${{ secrets.SERVER_IP }}
-        username : ${{ secrets.SSH_USER }}
-        key : ${{ secrets.SSH_PRIVATE_KEY }}
-#        script_stop : true
-#        script_timeout : 60m
-        script : |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
+#      # Log in to docker hub (replace 'username' and 'password' with your own)
+#    - name: Login to DockerHub Registry
+#      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+#
+#
+#      # Build and push docker image (replace 'your-dockerhub-username' and 'your-image-name' with your own)
+#    - name : Build and Push Docker image
+#      run : |
+#        docker build . --tag ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
+#        docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
+#
+#      # SSH into the EC2 instance and start the docker container (replace IP address and path-to-key.pem accordingly)
+#    - name : Deploy to AWS EC2
+#      uses : appleboy/ssh-action@master
+#      with :
+#        host : ${{ secrets.SERVER_IP }}
+#        username : ${{ secrets.SSH_USER }}
+#        key : ${{ secrets.SSH_PRIVATE_KEY }}
+##        script_stop : true
+##        script_timeout : 60m
+#        script : |
+#          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
 #          docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}:${{ github.sha }}
+
+    - name: Login to DockerHub
+      uses: docker/lodin-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Docker Image Build
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}
+
+    - name: DockerHub Push
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}
+
+    - name : Deploy to AWS EC2
+      uses: appleboy/ssh-action@v0.1.6
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+        script: |
+          sudo docker kill xenodochial_swirles
+          sudo docker rm -f xenodochial_swirles
+          sudo docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGENAME }}
+          sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGENAME }}
+          sudo docker run -p 8080:8080 --name xenodochial_swirles -d ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGENAME }}
