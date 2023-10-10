@@ -88,8 +88,6 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
 
         script: |
-#          sudo docker kill xenodochial_swirles
-#          sudo docker rm -f xenodochial_swirles
           sudo docker rm -f $(docker ps -aq)
           sudo docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGENAME }}
           sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGENAME }}
