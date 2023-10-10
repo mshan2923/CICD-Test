@@ -69,7 +69,7 @@ jobs:
 #         Remove All Container , Image
 
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}
-#          sudo docker run -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGENAME }}
+
           sudo docker run -p 8080:8080 \
                   -e SPRING_DATASOURCE_URL=${{secrets.DB_URL }} \
                   -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
